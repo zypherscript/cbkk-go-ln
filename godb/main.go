@@ -23,7 +23,8 @@ func main() {
 	}
 	defer db.Close()
 
-	ppls, err := getPeoples()
+	//find all
+	ppls, err := GetPeoples()
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -31,10 +32,21 @@ func main() {
 	for _, ppl := range ppls {
 		fmt.Println(ppl)
 	}
+
+	//query by id
+	ppl, err := GetPeople(2)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(*ppl)
 }
 
-func getPeoples() ([]People, error) {
-	if err := db.Ping(); err != nil {
+func GetPeoples() ([]People, error) {
+	// if err := db.Ping(); err != nil { //short if err but err only in if scope
+	// 	return nil, err
+	// }
+	err := db.Ping()
+	if err != nil {
 		return nil, err
 	}
 
@@ -55,4 +67,26 @@ func getPeoples() ([]People, error) {
 		ppls = append(ppls, ppl)
 	}
 	return ppls, nil
+}
+
+func GetPeople(id int) (*People, error) {
+	err := db.Ping()
+	if err != nil {
+		return nil, err
+	}
+
+	query := "select id, name from people where id = $1" //mysql ? //sqlserver @id
+	var ppl People
+	//long
+	// row := db.QueryRow(query, id)
+	// err = row.Scan(&ppl.Id, &ppl.Name)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	err = db.QueryRow(query, id).Scan(&ppl.Id, &ppl.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ppl, nil
 }
