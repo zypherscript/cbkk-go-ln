@@ -1,10 +1,11 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	_ "github.com/lib/pq"
 )
 
@@ -13,16 +14,17 @@ type People struct {
 	Name string
 }
 
-var db *sql.DB
+var conn *pgx.Conn
+var ctx = context.Background()
 
 func main() {
 	connStr := "postgres://postgres:postgres@localhost:5432/testdb?sslmode=disable"
 	var err error
-	db, err = sql.Open("postgres", connStr)
+	conn, err = pgx.Connect(ctx, connStr)
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close()
+	defer conn.Close(ctx)
 
 	//insert
 	addPpl := People{3, "test"}
@@ -82,13 +84,14 @@ func GetPeoples() ([]People, error) {
 	// if err := db.Ping(); err != nil { //short if err but err only in if scope
 	// 	return nil, err
 	// }
-	err := db.Ping()
+	var n int
+	err := conn.QueryRow(ctx, "SELECT 1").Scan(&n)
 	if err != nil {
 		return nil, err
 	}
 
 	query := "select id, name from people"
-	rows, err := db.Query(query)
+	rows, err := conn.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -107,10 +110,10 @@ func GetPeoples() ([]People, error) {
 }
 
 func GetPeople(id int) (*People, error) {
-	err := db.Ping()
-	if err != nil {
-		return nil, err
-	}
+	// err := db.Ping()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	query := "select id, name from people where id = $1" //mysql ? //sqlserver @id
 	var ppl People
@@ -120,7 +123,7 @@ func GetPeople(id int) (*People, error) {
 	// if err != nil {
 	// 	return nil, err
 	// }
-	err = db.QueryRow(query, id).Scan(&ppl.Id, &ppl.Name)
+	err := conn.QueryRow(ctx, query, id).Scan(&ppl.Id, &ppl.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -129,20 +132,17 @@ func GetPeople(id int) (*People, error) {
 }
 
 func AddPeople(ppl People) error {
-	err := db.Ping()
-	if err != nil {
-		return err
-	}
+	// err := db.Ping()
+	// if err != nil {
+	// 	return err
+	// }
 
 	query := "insert into people (id, name) values ($1, $2)"
-	result, err := db.Exec(query, ppl.Id, ppl.Name)
+	result, err := conn.Exec(ctx, query, ppl.Id, ppl.Name)
 	if err != nil {
 		return err
 	}
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
+	affected := result.RowsAffected()
 	if affected <= 0 {
 		return errors.New("cannot insert")
 	}
@@ -151,20 +151,17 @@ func AddPeople(ppl People) error {
 }
 
 func UpdatePeople(ppl People) error {
-	err := db.Ping()
-	if err != nil {
-		return err
-	}
+	// err := db.Ping()
+	// if err != nil {
+	// 	return err
+	// }
 
 	query := "update people set name=$2 where id=$1"
-	result, err := db.Exec(query, ppl.Id, ppl.Name)
+	result, err := conn.Exec(ctx, query, ppl.Id, ppl.Name)
 	if err != nil {
 		return err
 	}
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
+	affected := result.RowsAffected()
 	if affected <= 0 {
 		return errors.New("cannot update")
 	}
@@ -173,20 +170,17 @@ func UpdatePeople(ppl People) error {
 }
 
 func DeletePeople(id int) error {
-	err := db.Ping()
-	if err != nil {
-		return err
-	}
+	// err := db.Ping()
+	// if err != nil {
+	// 	return err
+	// }
 
 	query := "delete from people where id=$1"
-	result, err := db.Exec(query, id)
+	result, err := conn.Exec(ctx, query, id)
 	if err != nil {
 		return err
 	}
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
+	affected := result.RowsAffected()
 	if affected <= 0 {
 		return errors.New("cannot delete")
 	}
