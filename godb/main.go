@@ -114,6 +114,10 @@ func GetPeople(id int) (*People, error) {
 	// if err != nil {
 	// 	return nil, err
 	// }
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	query := "select id, name from people where id = $1" //mysql ? //sqlserver @id
 	var ppl People
@@ -123,7 +127,13 @@ func GetPeople(id int) (*People, error) {
 	// if err != nil {
 	// 	return nil, err
 	// }
-	err := conn.QueryRow(ctx, query, id).Scan(&ppl.Id, &ppl.Name)
+	err = tx.QueryRow(ctx, query, id).Scan(&ppl.Id, &ppl.Name)
+	if err != nil {
+		tx.Rollback(ctx)
+		return nil, err
+	}
+
+	err = tx.Commit(ctx)
 	if err != nil {
 		return nil, err
 	}
