@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	_ "github.com/lib/pq"
@@ -23,6 +24,14 @@ func main() {
 	}
 	defer db.Close()
 
+	//insert
+	addPpl := People{3, "test"}
+	err = AddPeople(addPpl)
+	if err != nil {
+		panic(err)
+	} else {
+		println("successfully added")
+	}
 	//find all
 	ppls, err := GetPeoples()
 	if err != nil {
@@ -33,12 +42,40 @@ func main() {
 		fmt.Println(ppl)
 	}
 
+	//update
+	addPpl = People{3, "test2"}
+	err = UpdatePeople(addPpl)
+	if err != nil {
+		panic(err)
+	} else {
+		println("successfully updated")
+	}
+
+	//find all
+	ppls, err = GetPeoples()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	for _, ppl := range ppls {
+		fmt.Println(ppl)
+	}
+
 	//query by id
+	println(">>> try queryRow")
 	ppl, err := GetPeople(2)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(*ppl)
+
+	//update
+	err = DeletePeople(addPpl.Id)
+	if err != nil {
+		panic(err)
+	} else {
+		println("successfully deleted")
+	}
 }
 
 func GetPeoples() ([]People, error) {
@@ -89,4 +126,70 @@ func GetPeople(id int) (*People, error) {
 	}
 
 	return &ppl, nil
+}
+
+func AddPeople(ppl People) error {
+	err := db.Ping()
+	if err != nil {
+		return err
+	}
+
+	query := "insert into people (id, name) values ($1, $2)"
+	result, err := db.Exec(query, ppl.Id, ppl.Name)
+	if err != nil {
+		return err
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected <= 0 {
+		return errors.New("cannot insert")
+	}
+
+	return nil
+}
+
+func UpdatePeople(ppl People) error {
+	err := db.Ping()
+	if err != nil {
+		return err
+	}
+
+	query := "update people set name=$2 where id=$1"
+	result, err := db.Exec(query, ppl.Id, ppl.Name)
+	if err != nil {
+		return err
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected <= 0 {
+		return errors.New("cannot update")
+	}
+
+	return nil
+}
+
+func DeletePeople(id int) error {
+	err := db.Ping()
+	if err != nil {
+		return err
+	}
+
+	query := "delete from people where id=$1"
+	result, err := db.Exec(query, id)
+	if err != nil {
+		return err
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected <= 0 {
+		return errors.New("cannot delete")
+	}
+
+	return nil
 }
