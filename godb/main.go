@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/lib/pq"
 )
 
@@ -14,17 +14,17 @@ type People struct {
 	Name string
 }
 
-var conn *pgx.Conn
+var pool *pgxpool.Pool
 var ctx = context.Background()
 
 func main() {
 	connStr := "postgres://postgres:postgres@localhost:5432/testdb?sslmode=disable"
 	var err error
-	conn, err = pgx.Connect(ctx, connStr)
+	pool, err = pgxpool.New(ctx, connStr)
 	if err != nil {
 		panic(err)
 	}
-	defer conn.Close(ctx)
+	defer pool.Close()
 
 	//insert
 	addPpl := People{3, "test"}
@@ -85,13 +85,13 @@ func GetPeoples() ([]People, error) {
 	// 	return nil, err
 	// }
 	var n int
-	err := conn.QueryRow(ctx, "SELECT 1").Scan(&n)
+	err := pool.QueryRow(ctx, "SELECT 1").Scan(&n)
 	if err != nil {
 		return nil, err
 	}
 
 	query := "select id, name from people"
-	rows, err := conn.Query(ctx, query)
+	rows, err := pool.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -110,11 +110,7 @@ func GetPeoples() ([]People, error) {
 }
 
 func GetPeople(id int) (*People, error) {
-	// err := db.Ping()
-	// if err != nil {
-	// 	return nil, err
-	// }
-	tx, err := conn.Begin(ctx)
+	err := pool.Ping(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -127,13 +123,7 @@ func GetPeople(id int) (*People, error) {
 	// if err != nil {
 	// 	return nil, err
 	// }
-	err = tx.QueryRow(ctx, query, id).Scan(&ppl.Id, &ppl.Name)
-	if err != nil {
-		tx.Rollback(ctx)
-		return nil, err
-	}
-
-	err = tx.Commit(ctx)
+	err = pool.QueryRow(ctx, query, id).Scan(&ppl.Id, &ppl.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +138,7 @@ func AddPeople(ppl People) error {
 	// }
 
 	query := "insert into people (id, name) values ($1, $2)"
-	result, err := conn.Exec(ctx, query, ppl.Id, ppl.Name)
+	result, err := pool.Exec(ctx, query, ppl.Id, ppl.Name)
 	if err != nil {
 		return err
 	}
@@ -167,7 +157,7 @@ func UpdatePeople(ppl People) error {
 	// }
 
 	query := "update people set name=$2 where id=$1"
-	result, err := conn.Exec(ctx, query, ppl.Id, ppl.Name)
+	result, err := pool.Exec(ctx, query, ppl.Id, ppl.Name)
 	if err != nil {
 		return err
 	}
@@ -184,15 +174,25 @@ func DeletePeople(id int) error {
 	// if err != nil {
 	// 	return err
 	// }
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
 
 	query := "delete from people where id=$1"
-	result, err := conn.Exec(ctx, query, id)
+	result, err := tx.Exec(ctx, query, id)
 	if err != nil {
+		tx.Rollback(ctx)
 		return err
 	}
 	affected := result.RowsAffected()
 	if affected <= 0 {
 		return errors.New("cannot delete")
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return err
 	}
 
 	return nil
