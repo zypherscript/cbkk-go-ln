@@ -27,7 +27,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/customers", customerHandler.GetCustomers).Methods("GET")
-	r.HandleFunc("/customers/{id}", customerHandler.GetCustomer).Methods("GET")
+	r.HandleFunc("/customers/{customerID:[0-9]+}", customerHandler.GetCustomer).Methods("GET")
 
 	log.Println("Server running on :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))

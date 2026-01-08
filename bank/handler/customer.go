@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/jackc/pgx/v5"
 )
 
 var ErrCustomerNotFound = errors.New("customer not found")
@@ -37,20 +36,11 @@ func (h customerHandler) GetCustomer(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	vars := mux.Vars(r)
-	idStr := vars["id"]
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
-		return
-	}
+	customerID, _ := strconv.Atoi(vars["customerID"])
 
-	customer, err := h.customerService.GetCustomer(ctx, id)
+	customer, err := h.customerService.GetCustomer(ctx, customerID)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			http.Error(w, "customer not found", http.StatusNotFound)
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 

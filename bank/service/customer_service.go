@@ -3,7 +3,10 @@ package service
 import (
 	"bank/repository"
 	"context"
+	"errors"
 	"log"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type customerService struct {
@@ -32,6 +35,9 @@ func (s customerService) GetCustomer(ctx context.Context, id int) (*CustomerResp
 	customer, err := s.customerRepository.GetById(ctx, id)
 	if err != nil {
 		log.Println(err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errors.New("customer not found")
+		}
 		return nil, err
 	}
 	customerResponse := CustomerResponse{customer.CustomerID, customer.Name, customer.Status}
