@@ -2,6 +2,7 @@ package main
 
 import (
 	"bank/repository"
+	"bank/service"
 	"context"
 	"fmt"
 
@@ -18,7 +19,8 @@ func main() {
 	defer db.Close()
 
 	customerRepository := repository.NewCustomerRepositoryDb(db)
-	customers, err := customerRepository.GetAll(ctx)
+	customerService := service.NewCustomerService(customerRepository)
+	customers, err := customerService.GetCustomers(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -26,7 +28,7 @@ func main() {
 		fmt.Println(customer)
 	}
 
-	customer, err := customerRepository.GetById(ctx, 1)
+	customer, err := customerService.GetCustomer(ctx, 1)
 	if err != nil {
 		panic(err)
 	}
