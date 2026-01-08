@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bank/handler"
 	"bank/repository"
 	"bank/service"
 	"context"
-	"fmt"
+	"log"
+	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -20,17 +23,12 @@ func main() {
 
 	customerRepository := repository.NewCustomerRepositoryDb(db)
 	customerService := service.NewCustomerService(customerRepository)
-	customers, err := customerService.GetCustomers(ctx)
-	if err != nil {
-		panic(err)
-	}
-	for _, customer := range customers {
-		fmt.Println(customer)
-	}
+	customerHandler := handler.NewCustomerHandler(customerService)
 
-	customer, err := customerService.GetCustomer(ctx, 1)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(*customer)
+	r := mux.NewRouter()
+	r.HandleFunc("/customers", customerHandler.GetCustomers).Methods("GET")
+	r.HandleFunc("/customers/{id}", customerHandler.GetCustomer).Methods("GET")
+
+	log.Println("Server running on :8080")
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
