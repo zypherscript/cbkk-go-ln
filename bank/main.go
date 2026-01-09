@@ -70,7 +70,12 @@ func initDb() *pgxpool.Pool {
 		viper.GetString("db.database"),
 		viper.GetString("db.sslmode"),
 	)
-	db, err := pgxpool.New(ctx, connStr)
+	config, err := pgxpool.ParseConfig(connStr)
+	config.MaxConnLifetime = 3 * time.Minute
+	config.MaxConns = 10
+	config.MinConns = 5
+
+	db, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		panic(err)
 	}
