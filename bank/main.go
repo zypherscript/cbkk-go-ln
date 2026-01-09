@@ -5,32 +5,75 @@ import (
 	"bank/repository"
 	"bank/service"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/spf13/viper"
 )
 
 func main() {
-	ctx := context.Background()
-	connStr := "postgres://postgres:postgres@localhost:5432/testdb?sslmode=disable"
-	db, err := pgxpool.New(ctx, connStr)
-	if err != nil {
-		panic(err)
-	}
+	initTimeZone()
+	initConfig()
+	db := initDb()
 	defer db.Close()
 
 	customerRepository := repository.NewCustomerRepositoryDb(db)
 	customerRepositoryMock := repository.NewCustomerRepositoryMock()
-	_ = customerRepository
-	customerService := service.NewCustomerService(customerRepositoryMock)
+	_ = customerRepositoryMock
+	customerService := service.NewCustomerService(customerRepository)
 	customerHandler := handler.NewCustomerHandler(customerService)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/customers", customerHandler.GetCustomers).Methods("GET")
 	r.HandleFunc("/customers/{customerID:[0-9]+}", customerHandler.GetCustomer).Methods("GET")
 
-	log.Println("Server running on :8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	port := viper.GetInt("app.port")
+	log.Printf("Server running on :%v", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), r))
+}
+
+func initConfig() {
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	if err := viper.ReadInConfig(); err != nil {
+		panic(err)
+	}
+}
+
+func initTimeZone() {
+	ict, err := time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		panic(err)
+	}
+
+	time.Local = ict
+}
+
+func initDb() *pgxpool.Pool {
+	ctx := context.Background()
+
+	connStr := fmt.Sprintf("%v://%v:%v@%v:%v/%v?sslmode=%v",
+		viper.GetString("db.driver"),
+		viper.GetString("db.username"),
+		viper.GetString("db.password"),
+		viper.GetString("db.host"),
+		viper.GetInt("db.port"),
+		viper.GetString("db.database"),
+		viper.GetString("db.sslmode"),
+	)
+	db, err := pgxpool.New(ctx, connStr)
+	if err != nil {
+		panic(err)
+	}
+
+	return db
 }
