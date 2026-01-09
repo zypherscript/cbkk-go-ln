@@ -1,10 +1,10 @@
 package service
 
 import (
+	"bank/logs"
 	"bank/repository"
 	"context"
 	"errors"
-	"log"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -20,7 +20,7 @@ func NewCustomerService(customerRepository repository.CustomerRepository) custom
 func (s customerService) GetCustomers(ctx context.Context) ([]CustomerResponse, error) {
 	customers, err := s.customerRepository.GetAll(ctx)
 	if err != nil {
-		log.Println(err)
+		logs.Error(err)
 		return nil, err
 	}
 	customerResponses := []CustomerResponse{}
@@ -34,7 +34,7 @@ func (s customerService) GetCustomers(ctx context.Context) ([]CustomerResponse, 
 func (s customerService) GetCustomer(ctx context.Context, id int) (*CustomerResponse, error) {
 	customer, err := s.customerRepository.GetById(ctx, id)
 	if err != nil {
-		log.Println(err)
+		logs.Error(err)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, errors.New("customer not found")
 		}

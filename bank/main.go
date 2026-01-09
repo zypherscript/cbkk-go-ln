@@ -2,12 +2,14 @@ package main
 
 import (
 	"bank/handler"
+	"bank/logs"
 	"bank/repository"
 	"bank/service"
 	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -33,7 +35,7 @@ func main() {
 	r.HandleFunc("/customers/{customerID:[0-9]+}", customerHandler.GetCustomer).Methods("GET")
 
 	port := viper.GetInt("app.port")
-	log.Printf("Server running on :%v", port)
+	logs.Info("Server running on :" + strconv.Itoa(port))
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), r))
 }
 
@@ -71,6 +73,9 @@ func initDb() *pgxpool.Pool {
 		viper.GetString("db.sslmode"),
 	)
 	config, err := pgxpool.ParseConfig(connStr)
+	if err != nil {
+		panic(err)
+	}
 	config.MaxConnLifetime = 3 * time.Minute
 	config.MaxConns = 10
 	config.MinConns = 5
