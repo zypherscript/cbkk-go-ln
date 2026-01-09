@@ -22,7 +22,9 @@ func main() {
 	defer db.Close()
 
 	customerRepository := repository.NewCustomerRepositoryDb(db)
-	customerService := service.NewCustomerService(customerRepository)
+	customerRepositoryMock := repository.NewCustomerRepositoryMock()
+	_ = customerRepository
+	customerService := service.NewCustomerService(customerRepositoryMock)
 	customerHandler := handler.NewCustomerHandler(customerService)
 
 	r := mux.NewRouter()
