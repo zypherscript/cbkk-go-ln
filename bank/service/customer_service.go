@@ -37,7 +37,7 @@ func (s customerService) GetCustomer(ctx context.Context, id int) (*CustomerResp
 	if err != nil {
 		logs.Error(err)
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errs.NewNotFoundError("customer not found")
+			return nil, errs.NewNotfoundError("customer not found")
 		}
 		return nil, errs.NewUnexpectedError()
 	}

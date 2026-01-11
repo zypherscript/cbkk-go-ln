@@ -11,10 +11,10 @@ func (e AppError) Error() string {
 	return e.Message
 }
 
-func NewNotFoundError(message string) error {
+func NewNotfoundError(message string) error {
 	return AppError{Code: http.StatusNotFound, Message: message}
 }
 
 func NewUnexpectedError() error {
-	return AppError{Code: http.StatusNotFound, Message: "unexpected error"}
+	return AppError{Code: http.StatusInternalServerError, Message: "unexpected error"}
 }
