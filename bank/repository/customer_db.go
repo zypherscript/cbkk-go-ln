@@ -10,7 +10,7 @@ type customerRepositoryDB struct {
 	db *pgxpool.Pool
 }
 
-func NewCustomerRepositoryDb(db *pgxpool.Pool) customerRepositoryDB {
+func NewCustomerRepositoryDb(db *pgxpool.Pool) CustomerRepository {
 	return customerRepositoryDB{db: db}
 }
 

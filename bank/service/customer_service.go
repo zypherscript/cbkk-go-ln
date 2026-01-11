@@ -14,7 +14,7 @@ type customerService struct {
 	customerRepository repository.CustomerRepository
 }
 
-func NewCustomerService(customerRepository repository.CustomerRepository) customerService {
+func NewCustomerService(customerRepository repository.CustomerRepository) CustomerService {
 	return customerService{customerRepository: customerRepository}
 }
 

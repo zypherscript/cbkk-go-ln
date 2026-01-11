@@ -10,7 +10,7 @@ type customerRepositoryMock struct {
 	customers []Customer
 }
 
-func NewCustomerRepositoryMock() customerRepositoryMock {
+func NewCustomerRepositoryMock() CustomerRepository {
 	customers := []Customer{
 		{CustomerID: 101, Name: "Alice Johnson", DateOfBirth: time.Date(1990, time.March, 15, 0, 0, 0, 0, time.UTC), City: "Bangkok", ZipCode: "10110", Status: 1},
 	}
