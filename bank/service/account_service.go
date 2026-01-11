@@ -19,7 +19,7 @@ func NewAccountService(accountRepository repository.AccountRepository) AccountSe
 
 func (s accountService) Create(ctx context.Context, customerID int, request NewAccountRequest) (*AccountResponse, error) {
 	if request.Amount < 5000 {
-		return nil, errs.NewValidationError("amound at least 5000")
+		return nil, errs.NewValidationError("amount at least 5000")
 	}
 	if strings.ToLower(request.AccountType) != "saving" && strings.ToLower(request.AccountType) != "checking" {
 		return nil, errs.NewValidationError("account type mismatch")
