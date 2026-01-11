@@ -19,6 +19,6 @@ type AccountResponse struct {
 }
 
 type AccountService interface {
-	Create(ctx context.Context, customerID int, account NewAccountRequest) (*AccountResponse, error)
+	Create(ctx context.Context, customerID int, request NewAccountRequest) (*AccountResponse, error)
 	GetAll(ctx context.Context, customerID int) ([]AccountResponse, error)
 }

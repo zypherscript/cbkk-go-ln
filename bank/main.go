@@ -30,9 +30,16 @@ func main() {
 	customerService := service.NewCustomerService(customerRepository)
 	customerHandler := handler.NewCustomerHandler(customerService)
 
+	accountRepository := repository.NewAccountRepositoryDB(db)
+	accountService := service.NewAccountService(accountRepository)
+	accountHandler := handler.NewAccountHandler(accountService)
+
 	r := mux.NewRouter()
-	r.HandleFunc("/customers", customerHandler.GetCustomers).Methods("GET")
-	r.HandleFunc("/customers/{customerID:[0-9]+}", customerHandler.GetCustomer).Methods("GET")
+	r.HandleFunc("/customers", customerHandler.GetCustomers).Methods(http.MethodGet)
+	r.HandleFunc("/customers/{customerID:[0-9]+}", customerHandler.GetCustomer).Methods(http.MethodGet)
+
+	r.HandleFunc("/customers/{customerID:[0-9]+}/accounts", accountHandler.GetAccounts).Methods(http.MethodGet)
+	r.HandleFunc("/customers/{customerID:[0-9]+}/accounts", accountHandler.CreateAccount).Methods(http.MethodPost)
 
 	port := viper.GetInt("app.port")
 	logs.Info("Server running on :" + strconv.Itoa(port))
