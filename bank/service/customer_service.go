@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bank/errs"
 	"bank/logs"
 	"bank/repository"
 	"context"
@@ -21,7 +22,7 @@ func (s customerService) GetCustomers(ctx context.Context) ([]CustomerResponse, 
 	customers, err := s.customerRepository.GetAll(ctx)
 	if err != nil {
 		logs.Error(err)
-		return nil, err
+		return nil, errs.NewUnexpectedError()
 	}
 	customerResponses := []CustomerResponse{}
 	for _, v := range customers {
@@ -36,9 +37,9 @@ func (s customerService) GetCustomer(ctx context.Context, id int) (*CustomerResp
 	if err != nil {
 		logs.Error(err)
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errors.New("customer not found")
+			return nil, errs.NewNotFoundError("customer not found")
 		}
-		return nil, err
+		return nil, errs.NewUnexpectedError()
 	}
 	customerResponse := CustomerResponse{customer.CustomerID, customer.Name, customer.Status}
 	return &customerResponse, nil

@@ -24,7 +24,7 @@ func (h customerHandler) GetCustomers(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	customers, err := h.customerService.GetCustomers(ctx)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		handleError(w, err)
 		return
 	}
 
@@ -40,7 +40,7 @@ func (h customerHandler) GetCustomer(w http.ResponseWriter, r *http.Request) {
 
 	customer, err := h.customerService.GetCustomer(ctx, customerID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		handleError(w, err)
 		return
 	}
 
