@@ -3,14 +3,11 @@ package handler
 import (
 	"bank/service"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
 )
-
-var ErrCustomerNotFound = errors.New("customer not found")
 
 type customerHandler struct {
 	customerService service.CustomerService
