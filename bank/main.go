@@ -7,8 +7,9 @@ import (
 	"bank/service"
 	"context"
 	"fmt"
-	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
 	"strings"
 	"time"
@@ -43,7 +44,22 @@ func main() {
 
 	port := viper.GetInt("app.port")
 	logs.Info("Server running on :" + strconv.Itoa(port))
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), r))
+
+	srv := &http.Server{Addr: fmt.Sprintf(":%v", port), Handler: r}
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logs.Error(err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+
+	logs.Info("Shutting down server...")
+	if err := srv.Shutdown(context.Background()); err != nil {
+		logs.Error(err)
+	}
 }
 
 func initConfig() {
