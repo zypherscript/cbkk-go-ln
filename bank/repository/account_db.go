@@ -40,6 +40,8 @@ func (r accountRepositoryDB) GetAll(ctx context.Context, customerID int) ([]Acco
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
+
 	accounts := []Account{}
 	for rows.Next() {
 		account := Account{}

@@ -1,11 +1,11 @@
 package service
 
 import (
+	"bank/domain"
 	"bank/errs"
 	"bank/logs"
 	"bank/repository"
 	"context"
-	"strings"
 	"time"
 )
 
@@ -21,8 +21,8 @@ func (s accountService) Create(ctx context.Context, customerID int, request NewA
 	if request.Amount < 5000 {
 		return nil, errs.NewValidationError("amount at least 5000")
 	}
-	if strings.ToLower(request.AccountType) != "saving" && strings.ToLower(request.AccountType) != "checking" {
-		return nil, errs.NewValidationError("account type mismatch")
+	if err := domain.ValidateAccountType(request.AccountType); err != nil {
+		return nil, errs.NewValidationError(err.Error())
 	}
 
 	account := repository.Account{CustomerID: customerID, OpeningDate: time.Now(), AccountType: request.AccountType, Amount: request.Amount, Status: 1}
