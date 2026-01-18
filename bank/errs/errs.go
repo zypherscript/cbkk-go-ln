@@ -22,3 +22,11 @@ func NewUnexpectedError() error {
 func NewValidationError(message string) error {
 	return AppError{Code: http.StatusUnprocessableEntity, Message: message}
 }
+
+func NewMethodNotAllowedError() error {
+	return AppError{Code: http.StatusMethodNotAllowed, Message: "method not allowed"}
+}
+
+func NewBadRequestError() error {
+	return AppError{Code: http.StatusBadRequest, Message: "bad request"}
+}

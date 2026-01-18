@@ -6,8 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-
-	"github.com/gorilla/mux"
+	"strings"
 )
 
 type accountHandler struct {
@@ -18,11 +17,8 @@ func NewAccountHandler(accountService service.AccountService) accountHandler {
 	return accountHandler{accountService: accountService}
 }
 
-func (h accountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
+func (h accountHandler) CreateAccount(w http.ResponseWriter, r *http.Request, customerID int) {
 	ctx := r.Context()
-
-	vars := mux.Vars(r)
-	customerID, _ := strconv.Atoi(vars["customerID"])
 
 	if r.Header.Get("Content-Type") != "application/json" {
 		handleError(w, errs.NewValidationError("request body incorrect format"))
@@ -47,11 +43,8 @@ func (h accountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(customers)
 }
 
-func (h accountHandler) GetAccounts(w http.ResponseWriter, r *http.Request) {
+func (h accountHandler) GetAccounts(w http.ResponseWriter, r *http.Request, customerID int) {
 	ctx := r.Context()
-
-	vars := mux.Vars(r)
-	customerID, _ := strconv.Atoi(vars["customerID"])
 
 	account, err := h.accountService.GetAll(ctx, customerID)
 	if err != nil {
@@ -61,4 +54,25 @@ func (h accountHandler) GetAccounts(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(account)
+}
+
+func (h accountHandler) HandleAccount(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimSuffix(r.URL.Path, "/")
+	parts := strings.Split(path, "/")
+	if len(parts) == 4 && parts[1] == "customers" && parts[3] == "accounts" {
+		customerID, err := strconv.Atoi(parts[2])
+		if err != nil {
+			handleError(w, errs.NewBadRequestError())
+			return
+		}
+		if r.Method == http.MethodGet {
+			h.GetAccounts(w, r, customerID)
+		} else if r.Method == http.MethodPost {
+			h.CreateAccount(w, r, customerID)
+		} else {
+			handleError(w, errs.NewMethodNotAllowedError())
+		}
+		return
+	}
+	http.NotFound(w, r)
 }

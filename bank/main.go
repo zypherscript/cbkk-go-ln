@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/viper"
 )
@@ -35,17 +34,18 @@ func main() {
 	accountService := service.NewAccountService(accountRepository)
 	accountHandler := handler.NewAccountHandler(accountService)
 
-	r := mux.NewRouter()
-	r.HandleFunc("/customers", customerHandler.GetCustomers).Methods(http.MethodGet)
-	r.HandleFunc("/customers/{customerID:[0-9]+}", customerHandler.GetCustomer).Methods(http.MethodGet)
-
-	r.HandleFunc("/customers/{customerID:[0-9]+}/accounts", accountHandler.GetAccounts).Methods(http.MethodGet)
-	r.HandleFunc("/customers/{customerID:[0-9]+}/accounts", accountHandler.CreateAccount).Methods(http.MethodPost)
+	http.HandleFunc("/customers/", func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.Path, "/accounts") {
+			accountHandler.HandleAccount(w, r)
+		} else {
+			customerHandler.HandleCustomer(w, r)
+		}
+	})
 
 	port := viper.GetInt("app.port")
 	logs.Info("Server running on :" + strconv.Itoa(port))
 
-	srv := &http.Server{Addr: fmt.Sprintf(":%v", port), Handler: r}
+	srv := &http.Server{Addr: fmt.Sprintf(":%v", port)}
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logs.Error(err)
