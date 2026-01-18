@@ -18,10 +18,6 @@ func NewAccountHandler(accountService service.AccountService) accountHandler {
 }
 
 func (h accountHandler) CreateAccount(w http.ResponseWriter, r *http.Request, customerID int) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 	ctx := r.Context()
 
 	if r.Header.Get("Content-Type") != "application/json" {
@@ -48,10 +44,6 @@ func (h accountHandler) CreateAccount(w http.ResponseWriter, r *http.Request, cu
 }
 
 func (h accountHandler) GetAccounts(w http.ResponseWriter, r *http.Request, customerID int) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 	ctx := r.Context()
 
 	account, err := h.accountService.GetAll(ctx, customerID)
