@@ -62,7 +62,7 @@ func (h accountHandler) HandleAccount(w http.ResponseWriter, r *http.Request) {
 	if len(parts) == 4 && parts[1] == "customers" && parts[3] == "accounts" {
 		customerID, err := strconv.Atoi(parts[2])
 		if err != nil {
-			http.Error(w, "Bad request", http.StatusBadRequest)
+			handleError(w, errs.NewBadRequestError())
 			return
 		}
 		if r.Method == http.MethodGet {
@@ -70,7 +70,7 @@ func (h accountHandler) HandleAccount(w http.ResponseWriter, r *http.Request) {
 		} else if r.Method == http.MethodPost {
 			h.CreateAccount(w, r, customerID)
 		} else {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			handleError(w, errs.NewMethodNotAllowedError())
 		}
 		return
 	}

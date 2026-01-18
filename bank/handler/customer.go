@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bank/errs"
 	"bank/service"
 	"encoding/json"
 	"net/http"
@@ -18,7 +19,7 @@ func NewCustomerHandler(customerService service.CustomerService) customerHandler
 
 func (h customerHandler) GetCustomers(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		handleError(w, errs.NewMethodNotAllowedError())
 		return
 	}
 	ctx := r.Context()
@@ -34,7 +35,7 @@ func (h customerHandler) GetCustomers(w http.ResponseWriter, r *http.Request) {
 
 func (h customerHandler) GetCustomer(w http.ResponseWriter, r *http.Request, customerID int) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		handleError(w, errs.NewMethodNotAllowedError())
 		return
 	}
 	ctx := r.Context()
@@ -59,7 +60,7 @@ func (h customerHandler) HandleCustomer(w http.ResponseWriter, r *http.Request) 
 	if len(parts) == 3 && parts[1] == "customers" {
 		customerID, err := strconv.Atoi(parts[2])
 		if err != nil {
-			http.Error(w, "Bad request", http.StatusBadRequest)
+			handleError(w, errs.NewBadRequestError())
 			return
 		}
 		h.GetCustomer(w, r, customerID)
