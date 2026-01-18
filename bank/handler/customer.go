@@ -5,8 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-
-	"github.com/gorilla/mux"
+	"strings"
 )
 
 type customerHandler struct {
@@ -18,6 +17,10 @@ func NewCustomerHandler(customerService service.CustomerService) customerHandler
 }
 
 func (h customerHandler) GetCustomers(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 	ctx := r.Context()
 	customers, err := h.customerService.GetCustomers(ctx)
 	if err != nil {
@@ -29,11 +32,12 @@ func (h customerHandler) GetCustomers(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(customers)
 }
 
-func (h customerHandler) GetCustomer(w http.ResponseWriter, r *http.Request) {
+func (h customerHandler) GetCustomer(w http.ResponseWriter, r *http.Request, customerID int) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 	ctx := r.Context()
-
-	vars := mux.Vars(r)
-	customerID, _ := strconv.Atoi(vars["customerID"])
 
 	customer, err := h.customerService.GetCustomer(ctx, customerID)
 	if err != nil {
@@ -43,4 +47,23 @@ func (h customerHandler) GetCustomer(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(customer)
+}
+
+func (h customerHandler) HandleCustomer(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimSuffix(r.URL.Path, "/")
+	if path == "/customers" {
+		h.GetCustomers(w, r)
+		return
+	}
+	parts := strings.Split(path, "/")
+	if len(parts) == 3 && parts[1] == "customers" {
+		customerID, err := strconv.Atoi(parts[2])
+		if err != nil {
+			http.Error(w, "Bad request", http.StatusBadRequest)
+			return
+		}
+		h.GetCustomer(w, r, customerID)
+		return
+	}
+	http.NotFound(w, r)
 }
